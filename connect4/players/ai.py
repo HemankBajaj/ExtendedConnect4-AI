@@ -23,41 +23,32 @@ class AIPlayer:
         board = state[0]
         new_board = board.copy()
         rows = len(board)
-        columns = len(board[0])
         if not isPop and board[0][move]:
             return -1
         elif isPop and (board[-1][move]==0 or state[1][player_number].get_int()==0 or 1+move%2!=player_number):
             return -1
         elif isPop:
-            for col in columns :
-                if col != move:
-                    continue
+            first_filled = 0
+            for i in range(rows):
+                if board[i][move]==0:
+                    new_board[i][move] = 0
                 else :
-                    first_filled = 0
-                    for i in range(rows):
-                        if board[i][col]==0:
-                            new_board[i][col] = 0
-                        else :
-                            new_board[i][col] = 0
-                            first_filled = i
-                            break
-                    for i in range(first_filled, rows-1):
-                        new_board[i+1][col] = board[i][col]
-            return Tuple(new_board, {player_number: Integer(state[1][player_number].get_int()-1), 3-player_number: state[1][3-player_number]})
+                    new_board[i][move] = 0
+                    first_filled = i
+                    break
+            for i in range(first_filled, rows-1):
+                new_board[i+1][move] = board[i][move]
+            return (new_board, {player_number: Integer(state[1][player_number].get_int()-1), 3-player_number: state[1][3-player_number]})
         else :
-            for col in columns :
-                if col != move:
+            first_filled = 0
+            for i in range(rows):
+                if board[i][move]==0:
                     continue
                 else :
-                    first_filled = 0
-                    for i in range(rows):
-                        if board[i][col]==0:
-                            continue
-                        else :
-                            first_filled = i
-                            break
-                    new_board[first_filled-1][col] = player_number
-            return Tuple(new_board, state[1])
+                    first_filled = i
+                    break
+            new_board[first_filled-1][move] = player_number
+            return (new_board, state[1])
 
     def get_expectimax_score(self, state, player_number : int, max_depth : int) -> int :
         move_scores = {}
@@ -68,20 +59,24 @@ class AIPlayer:
             new_state_push = self.state_update(state, col, 0, player_number)
             new_state_pop = self.state_update(state, col, 1, player_number)
             if new_state_push != -1:
-                move_scores["push{}".format(col)] = self.get_expectimax_score(3-player_number, max_depth-1)
+                move_scores["push{}".format(col)] = self.get_expectimax_score(new_state_push,3-player_number, max_depth-1)
             if new_state_pop != -1:
-                move_scores["pop{}".format(col)] = self.get_expectimax_score(3-player_number, max_depth-1)
+                move_scores["pop{}".format(col)] = self.get_expectimax_score(new_state_pop,3-player_number, max_depth-1)
         retval = -1e9
         if player_number == self.player_number:
             for move in move_scores:
                 retval = max(retval, move_scores[move])
+            return retval
         else :
+            retval = 0
             cnt = 0
             for move in move_scores:
                 retval += move_scores[move]
                 cnt += 1
+            if cnt==0:
+                return 0
             retval /= cnt
-        return retval
+            return retval
 
     def get_intelligent_move(self, state: Tuple[np.array, Dict[int, Integer]]) -> Tuple[int, bool]:
         """
@@ -99,7 +94,8 @@ class AIPlayer:
         :return: action (0 based index of the column and if it is a popout move)
         """
         # Do the rest of your implementation here
-        raise NotImplementedError('Whoops I don\'t know what to do')
+        return self.get_expectimax_move(state)
+        # raise NotImplementedError('Whoops I don\'t know what to do')
 
     def get_expectimax_move(self, state: Tuple[np.array, Dict[int, Integer]]) -> Tuple[int, bool]:
         """
@@ -119,32 +115,46 @@ class AIPlayer:
         :return: action (0 based index of the column and if it is a popout move)
         """
         start_time = time.time()
-        columns = len(state[0])
+        columns = len(state[0][0])
         move = -1
         isPop = 0
         maax = -1e9
-        for depth in range(10):
-            for col in range(columns) :
-                new_state_push = self.state_update(state, col, 0, self.player_number)
-                new_state_pop = self.state_update(state, col, 1, self.player_number)
-                if new_state_push != -1:
-                    val = self.get_expectimax_score(3-self.player_number, depth)
-                    if val > maax :
-                        maax = val
-                        move = col
-                        isPop = 0 
-                if new_state_pop != -1:
-                    val = self.get_expectimax_score(3-self.player_number, depth)
-                    if val > maax :
-                        maax = val
-                        move = col
-                        isPop = 1
-                if time.time()-start_time > 4.5 :
-                    return (move, isPop)
-            move = -1
-            isPop = 0
-            maax = -1e9
-
+        # for depth in range(10):
+        #     for col in range(columns) :
+        #         new_state_push = self.state_update(state, col, 0, self.player_number)
+        #         new_state_pop = self.state_update(state, col, 1, self.player_number)
+        #         if new_state_push != -1:
+        #             val = self.get_expectimax_score(new_state_push, 3-self.player_number, depth)
+        #             if val > maax :
+        #                 maax = val
+        #                 move = col
+        #                 isPop = 0 
+        #         if new_state_pop != -1:
+        #             val = self.get_expectimax_score(new_state_pop, 3-self.player_number, depth)
+        #             if val > maax :
+        #                 maax = val
+        #                 move = col
+        #                 isPop = 1
+        #     move = -1
+        #     isPop = 0
+        #     maax = -1e9
+        for col in range(columns) :
+            new_state_push = self.state_update(state, col, 0, self.player_number)
+            new_state_pop = self.state_update(state, col, 1, self.player_number)
+            if new_state_push != -1:
+                val = self.get_expectimax_score(new_state_push, 3-self.player_number, 3)
+                if val > maax :
+                    maax = val
+                    move = col
+                    isPop = 0 
+            if new_state_pop != -1:
+                val = self.get_expectimax_score(new_state_pop, 3-self.player_number, 3)
+                if val > maax :
+                    maax = val
+                    move = col
+                    isPop = 1
+        print(move, isPop)
+        return (move, isPop)
         raise NotImplementedError('Whoops I don\'t know what to do')
 
     def evaluate(self, state: Tuple[np.array, Dict[int, Integer]]) -> int :
