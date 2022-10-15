@@ -1,3 +1,2 @@
-Game Over
-Player 1 Score: 72
-Player 2 Score: 222
+151
+133

@@ -31,7 +31,7 @@ class AIPlayer:
         elif isPop and (board[-1][move]==0 or state[1][player_number].get_int()==0 or 1+move%2!=player_number):
             return -1
         elif isPop:
-            self.moveCount -= 1
+            # self.moveCount -= 1
             first_filled = 0
             for i in range(rows):
                 if board[i][move]==0:
@@ -44,7 +44,7 @@ class AIPlayer:
                 new_board[i+1][move] = board[i][move]
             return (new_board, {player_number: Integer(state[1][player_number].get_int()-1), 3-player_number: state[1][3-player_number]})
         else :
-            self.moveCount += 1
+            # self.moveCount += 1
             first_filled = 0
             for i in range(rows):
                 if board[i][move]==0:
@@ -55,18 +55,18 @@ class AIPlayer:
             new_board[first_filled-1][move] = player_number
             return (new_board, state[1])
 
-    def get_expectimax_score(self, state, player_number : int, max_depth : int) -> int :
+    def get_expectimax_score(self, state, player_number : int, max_depth : int, step) -> int :
         move_scores = {}
         columns = len(state[0])
         if max_depth == 0 :
-            return self.evaluate(state)
+            return self.evaluate(state, step)
         for col in range(columns) :
             new_state_push = self.state_update(state, col, 0, player_number)
             new_state_pop = self.state_update(state, col, 1, player_number)
             if new_state_push != -1:
-                move_scores["push{}".format(col)] = self.get_expectimax_score(new_state_push,3-player_number, max_depth-1)
+                move_scores["push{}".format(col)] = self.get_expectimax_score(new_state_push,3-player_number, max_depth-1, step + 1)
             if new_state_pop != -1:
-                move_scores["pop{}".format(col)] = self.get_expectimax_score(new_state_pop,3-player_number, max_depth-1)
+                move_scores["pop{}".format(col)] = self.get_expectimax_score(new_state_pop,3-player_number, max_depth-1, step + 1)
         retval = -1e9
         if player_number == self.player_number:
             for move in move_scores:
@@ -83,18 +83,18 @@ class AIPlayer:
             retval /= cnt
             return retval
 
-    def get_minimax_score(self, state, player_number, max_depth):
+    def get_minimax_score(self, state, player_number, max_depth, step):
         move_scores = {}
         columns = len(state[0])
         if max_depth == 0 :
-            return self.evaluate(state)
+            return self.evaluate(state, step)
         for col in range(columns) :
             new_state_push = self.state_update(state, col, 0, player_number)
             new_state_pop = self.state_update(state, col, 1, player_number)
             if new_state_push != -1:
-                move_scores["push{}".format(col)] = self.get_minimax_score(new_state_push,3-player_number, max_depth-1)
+                move_scores["push{}".format(col)] = self.get_minimax_score(new_state_push,3-player_number, max_depth-1,step + 1)
             if new_state_pop != -1:
-                move_scores["pop{}".format(col)] = self.get_minimax_score(new_state_pop,3-player_number, max_depth-1)
+                move_scores["pop{}".format(col)] = self.get_minimax_score(new_state_pop,3-player_number, max_depth-1,step + 1)
         retval = -1e9
         if player_number == self.player_number:
             retval = -1e9
@@ -151,18 +151,22 @@ class AIPlayer:
             new_state_push = self.state_update(state, col, 0, self.player_number)
             new_state_pop = self.state_update(state, col, 1, self.player_number)
             if new_state_push != -1:
-                val = self.get_minimax_score(new_state_push, 3-self.player_number, 4)
+                val = self.get_minimax_score(new_state_push, 3-self.player_number, 3, self.moveCount)
                 if val > maax :
                     maax = val
                     move = col
                     isPop = 0 
             if new_state_pop != -1:
-                val = self.get_minimax_score(new_state_pop, 3-self.player_number, 4)
+                val = self.get_minimax_score(new_state_pop, 3-self.player_number, 3, self.moveCount)
                 if val > maax :
                     maax = val
                     move = col
                     isPop = 1
         print(move, isPop)
+        if isPop: 
+            self.moveCount -= 1
+        else:
+            self.moveCount += 1
         return (move, isPop)
         raise NotImplementedError('Whoops I don\'t know what to do')
 
@@ -213,30 +217,37 @@ class AIPlayer:
             new_state_push = self.state_update(state, col, 0, self.player_number)
             new_state_pop = self.state_update(state, col, 1, self.player_number)
             if new_state_push != -1:
-                val = self.get_expectimax_score(new_state_push, 3-self.player_number, 3)
+                val = self.get_expectimax_score(new_state_push, 3-self.player_number, 3, self.moveCount)
                 if val > maax :
                     maax = val
                     move = col
                     isPop = 0 
             if new_state_pop != -1:
-                val = self.get_expectimax_score(new_state_pop, 3-self.player_number, 3)
+                val = self.get_expectimax_score(new_state_pop, 3-self.player_number, 3, self.moveCount)
                 if val > maax :
                     maax = val
                     move = col
                     isPop = 1
         print(move, isPop)
+        if isPop: 
+            self.moveCount -= 1
+        else:
+            self.moveCount += 1
         return (move, isPop)
         raise NotImplementedError('Whoops I don\'t know what to do')
 
-    def evaluate(self, state: Tuple[np.array, Dict[int, Integer]]) -> int :
+    def evaluate(self, state: Tuple[np.array, Dict[int, Integer]], step) -> int :
         pts1 = get_pts(self.player_number, state[0])
         pts2 = get_pts(3-self.player_number, state[0])
         pops1 = state[1][self.player_number].get_int()
         pops2 = state[1][3-self.player_number].get_int()
         cells = self.rows * self.columns 
         def weight(x, n):
-            mu = n/2
-            sigma = n/2
-            return np.exp(-((x - n/2)**2)/(2*sigma*sigma))/(sigma*(np.sqrt(np.pi*2)))
-        w = weight(self.moveCount, cells)
-        return 2*(pts1 - pts2) + (pops2 - pops1)*2*w
+            return 1/(1 + np.exp(-(x-n/4)))
+        
+        # pop_diff = pops1 - pops2
+        # pop_factor = pts1/max(1, state[1][self.player_number].get_int())-pts2/max(1, state[1][3-self.player_number].get_int())
+        # pop_factor = 1/max(1, )
+        # pop_factor = 
+        w = weight(step, cells)
+        return 2.25*(pts1) - (w+2)*(pts2) + (pts1/(1 + pops1) - pts2/(1 + pops2))*2*w
