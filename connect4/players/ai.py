@@ -144,13 +144,13 @@ class AIPlayer:
             new_state_push = self.state_update(state, col, 0, self.player_number)
             new_state_pop = self.state_update(state, col, 1, self.player_number)
             if new_state_push != -1:
-                val = self.get_minimax_score(new_state_push, 3-self.player_number, 3)
+                val = self.get_minimax_score(new_state_push, 3-self.player_number, 4)
                 if val > maax :
                     maax = val
                     move = col
                     isPop = 0 
             if new_state_pop != -1:
-                val = self.get_minimax_score(new_state_pop, 3-self.player_number, 3)
+                val = self.get_minimax_score(new_state_pop, 3-self.player_number, 4)
                 if val > maax :
                     maax = val
                     move = col
@@ -220,4 +220,12 @@ class AIPlayer:
         raise NotImplementedError('Whoops I don\'t know what to do')
 
     def evaluate(self, state: Tuple[np.array, Dict[int, Integer]]) -> int :
-        return get_pts(self.player_number, state[0])-get_pts(3-self.player_number, state[0]) 
+        pts1 = get_pts(self.player_number, state[0])
+        pts2 = get_pts(3-self.player_number, state[0])
+        pops1 = state[1][self.player_number].get_int()
+        pops2 = state[1][3-self.player_number].get_int()
+        # pop_diff = pops1 - pops2
+        # pop_factor = pts1/max(1, state[1][self.player_number].get_int())-pts2/max(1, state[1][3-self.player_number].get_int())
+        # pop_factor = 1/max(1, )
+        # pop_factor = 
+        return 2*(pts1 - pts2) + pops2 - pops1 
