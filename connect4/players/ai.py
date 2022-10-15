@@ -17,6 +17,9 @@ class AIPlayer:
         self.type = 'ai'
         self.player_string = 'Player {}:ai'.format(player_number)
         self.time = time
+        self.moveCount = 0
+        self.columns = -1
+        self.reows = -1
         # Do the rest of your implementation here
 
     def state_update(self, state, move, isPop, player_number):
@@ -28,6 +31,7 @@ class AIPlayer:
         elif isPop and (board[-1][move]==0 or state[1][player_number].get_int()==0 or 1+move%2!=player_number):
             return -1
         elif isPop:
+            self.moveCount -= 1
             first_filled = 0
             for i in range(rows):
                 if board[i][move]==0:
@@ -40,6 +44,7 @@ class AIPlayer:
                 new_board[i+1][move] = board[i][move]
             return (new_board, {player_number: Integer(state[1][player_number].get_int()-1), 3-player_number: state[1][3-player_number]})
         else :
+            self.moveCount += 1
             first_filled = 0
             for i in range(rows):
                 if board[i][move]==0:
@@ -117,6 +122,8 @@ class AIPlayer:
                         2. Dictionary of int to Integer. It will tell the remaining popout moves given a player
         :return: action (0 based index of the column and if it is a popout move)
         """
+        self.columns = len(state[0][0])
+        self.rows = len(state[0])
         columns = len(state[0][0])
         move = -1
         isPop = 0
@@ -176,6 +183,8 @@ class AIPlayer:
                         2. Dictionary of int to Integer. It will tell the remaining popout moves given a player
         :return: action (0 based index of the column and if it is a popout move)
         """
+        self.columns = len(state[0][0])
+        self.rows = len(state[0])
         start_time = time.time()
         columns = len(state[0][0])
         move = -1
@@ -224,8 +233,10 @@ class AIPlayer:
         pts2 = get_pts(3-self.player_number, state[0])
         pops1 = state[1][self.player_number].get_int()
         pops2 = state[1][3-self.player_number].get_int()
-        # pop_diff = pops1 - pops2
-        # pop_factor = pts1/max(1, state[1][self.player_number].get_int())-pts2/max(1, state[1][3-self.player_number].get_int())
-        # pop_factor = 1/max(1, )
-        # pop_factor = 
-        return 2*(pts1 - pts2) + pops2 - pops1 
+        cells = self.rows * self.columns 
+        def weight(x, n):
+            mu = n/2
+            sigma = n/2
+            return np.exp(-((x - n/2)**2)/(2*sigma*sigma))/(sigma*(np.sqrt(np.pi*2)))
+        w = weight(self.moveCount, cells)
+        return 2*(pts1 - pts2) + (pops2 - pops1)*2*w
