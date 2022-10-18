@@ -40,7 +40,29 @@ class HumanPlayer:
         :return: action (0 based index of the column and if it is a popout move)
         """
         valid_actions = get_valid_actions(self.player_number, state)
-        action = self.get_action(get_input())
+        # action = self.get_action(get_input())
+        h2   = ("170.20.10.5", 20010)
+        a2   = ("170.20.10.2", 20012)
+        h1   = ("170.20.10.2", 20014)
+        a1   = ("170.20.10.5", 20016)
+        
+        if self.player_number == 2:
+            me = h2
+        
+        else:
+            me = h1
+    
+        
+        import socket
+        UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        UDPClientSocket.bind(me)
+        msgFromServer = UDPClientSocket.recvfrom(1024)
+        inp = msgFromServer[0].decode()
+        print(inp)
+        if inp[-1] == 'P':
+            action = int(inp[:-1]), True
+        else:
+            action = int(inp), False
         if action not in valid_actions:
             print('Invalid Move: Choose from: {}'.format(valid_actions))
             print('Turning to other player')

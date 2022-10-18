@@ -278,7 +278,7 @@ class AIPlayer:
         best_move = -1
         isPop = 0
 
-        for depth in range(1, 200):
+        for depth in range(2, 500, 2):
             (a, b) = self.iterative_deepening_search(state, depth)
             if a+1:
                 (best_move, isPop) = (a, b)
@@ -322,7 +322,7 @@ class AIPlayer:
                 return 1
             return 0
 
-        return f1(x)*(pops1+pts1 - 7*pts2) + f2(x)*(pts1 - 5*pts2) + f3(x)*(pts1 - 3*pts2)
+        return f1(x)*(20*pops1 + pts1 - 3*pts2) + f2(x)*(pts1*pts1 - 2*pts2*pts2) + f3(x)*(pts1 - 3*pts2)
 
         # pop_diff = pops1 - pops2
         # pop_factor = pts1/max(1, state[1][self.player_number].get_int())-pts2/max(1, state[1][3-self.player_number].get_int())
@@ -394,7 +394,7 @@ class AIPlayer:
         best_move = -1
         isPop = 0
 
-        for depth in range(1, 200):
+        for depth in range(2, 500, 2):
             (a, b) = self.iterative_deepening_search_expectimax(state, depth)
             if a+1:
                 (best_move, isPop) = (a, b)
@@ -409,14 +409,33 @@ class AIPlayer:
         pts2 = get_pts(3-self.player_number, state[0])
         pops1 = state[1][self.player_number].get_int()
         pops2 = state[1][3-self.player_number].get_int()
-        cells = self.rows * self.columns 
+        n = self.rows * self.columns 
+
+        self_cnt = 0
+        opp_cnt = 0
+
+        board = state[0]
+
+        # use np here 
+        for i in range(self.rows):
+            for j in range(self.columns):
+                self_cnt += board[i][j] == self.player_number
+                opp_cnt += board[i][j] == 3-self.player_number
+        x = self_cnt + opp_cnt
         def weight(x, n):
             return 1/(1 + np.exp(-(x-n/4)))
         
-        # pop_diff = pops1 - pops2
-        # pop_factor = pts1/max(1, state[1][self.player_number].get_int())-pts2/max(1, state[1][3-self.player_number].get_int())
-        # pop_factor = 1/max(1, )
-        # pop_factor = 
-        w = weight(step, cells)
-        # return 2.25*(pts1) - (w+2+2*step%2)*(pts2) + (pts1/(1 + pops1) - pts2/(1 + pops2))*2*w
-        return pts1 - 3 * pts2
+        def f1(x):
+            if x <= n/4 and x >= 0:
+                return 1
+            return 0
+        def f2(x):
+            if x <= 3*n/4 and x > n/4:
+                return 1
+            return 0
+        def f3(x):
+            if x > 3*n/4: 
+                return 1
+            return 0
+
+        return f1(x)*(20*pops1 + pts1 - 3*pts2) + f2(x)*(pts1*pts1 - 2*pts2*pts2) + f3(x)*(pts1 - 3*pts2)
