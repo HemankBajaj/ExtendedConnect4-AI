@@ -322,7 +322,7 @@ class AIPlayer:
                 return 1
             return 0
 
-        return f1(x)*(20*pops1 + pts1 - 3*pts2) + f2(x)*(pts1*pts1 - 2*pts2*pts2) + f3(x)*(pts1 - 3*pts2)
+        return pts1 - pts2 
 
         # pop_diff = pops1 - pops2
         # pop_factor = pts1/max(1, state[1][self.player_number].get_int())-pts2/max(1, state[1][3-self.player_number].get_int())
